@@ -16,6 +16,7 @@ PROVIDER_ENV_MAP: dict[str, str] = {
     "azure": "AZURE_OPENAI_API_KEY",
     "groq": "GROQ_API_KEY",
     "mistral": "MISTRAL_API_KEY",
+    "cerebras": "CEREBRAS_API_KEY",
 }
 
 PROVIDER_DEFAULTS: dict[str, str] = {
@@ -23,7 +24,9 @@ PROVIDER_DEFAULTS: dict[str, str] = {
     "together": "https://api.together.xyz/v1/chat/completions",
     "groq": "https://api.groq.com/openai/v1/chat/completions",
     "mistral": "https://api.mistral.ai/v1/chat/completions",
+    "cerebras": "https://api.cerebras.ai/v1/chat/completions",
 }
+
 
 DEFAULT_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 

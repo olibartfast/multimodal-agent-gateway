@@ -112,6 +112,7 @@ See [docs/video-vlm-agents.md](docs/video-vlm-agents.md) for model recommendatio
 | Azure OpenAI | `azure` | `AZURE_OPENAI_API_KEY` |
 | Groq | `groq` | `GROQ_API_KEY` |
 | Mistral | `mistral` | `MISTRAL_API_KEY` |
+| Cerebras | `cerebras` | `CEREBRAS_API_KEY` |
 
 ## Python API
 

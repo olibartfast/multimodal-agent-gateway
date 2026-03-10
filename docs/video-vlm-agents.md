@@ -6,27 +6,29 @@ applications driven by agentic AI — using cloud APIs and self-hosted inference
 
 ---
 
-## Video-Capable VLM Landscape (2025)
+## Video-Capable VLM Landscape (2026)
 
-### Tier 1 — Frontier Video VLMs
+### Tier 1 — Frontier Video VLMs (Reasoning-First)
 
 | Model | Params | Video Support | Key Strengths | Access |
 |-------|--------|--------------|---------------|--------|
-| **Qwen3-VL** | 8B / 235B-A22B (MoE) | Native video + dynamic FPS | 3D grounding, visual agent, code gen from video | HF, vLLM, DashScope API |
-| **Qwen2.5-VL** | 3B / 7B / 32B / 72B | Native video, 1hr+ length | Event pinpointing, absolute time encoding, structured output | HF, vLLM, Together AI API |
-| **GLM-4.1V-Thinking** | 9B | Native video, time-index tokens | Reasoning-first (RLCS), competitive with 72B models | HF, vLLM, Zhipu API |
-| **GLM-4.5V** | 106B-A12B (MoE) | Native video | SOTA open-source on 42 benchmarks, 128K context | HF, vLLM |
-| **GPT-4o / 4o-mini** | Closed | Frames as images | Broad capability, widely available | OpenAI API |
-| **Gemini 2.x Flash/Pro** | Closed | Native video upload | Long video (up to hours), audio track analysis | Google API |
+| **Gemini 3 Pro / Flash** | Closed | Native video (1M+ context) | **SOTA 2026**; "Deep Think" visual reasoning, 1hr+ high-res video | Google API |
+| **GPT-5 / 5.2** | Closed | Native video / Frames | **SOTA 2026**; Agentic UI execution, unified multimodal reasoning | OpenAI API |
+| **Qwen 3.5-VL** | 8B / 250B+ (MoE) | Unified Pixels-as-Tokens | **Open SOTA**; Single-stream architecture (no separate encoder) | HF, vLLM, DashScope |
+| **Claude 4.5 Opus** | Closed | Frames as images | Best-in-class OCR and dense document/interface reasoning | Anthropic API |
+| **Qwen3-VL** | 8B / 235B (MoE) | Native video + dynamic FPS | 3D grounding, visual agent, stable production choice | HF, vLLM, DashScope API |
+| **GLM-4.1V-Thinking** | 9B | Native video, time-index tokens | Reasoning-first (RLCS), extreme efficiency for edge | HF, vLLM, Zhipu API |
+| **Llama 3.2 Vision (Cerebras)** | 11B / 90B | Frames as images | **Extreme Speed**; Hundreds of tokens/sec for real-time analysis | Cerebras API |
 
-### Tier 2 — Established Video VLMs
+### Tier 2 — Stable & Legacy Video VLMs
 
 | Model | Params | Notes |
 |-------|--------|-------|
-| **LLaVA-Video** (formerly LLaVA-NeXT-Video) | 7B / 72B | Trained on LLaVA-Video-178K synthetic dataset, strong on VideoMME |
-| **LLaVA-OneVision** | 0.5B / 7B / 72B | Unified image + multi-image + video, good zero-shot transfer |
-| **InternVL 2.5** | 1B–78B | MPO-optimized, strong multimodal reasoning |
-| **Phi-3.5-Vision** | 4.2B | Compact, multi-frame support, good for edge |
+| **Llama 4 Maverick** | 400B (MoE) | Meta's 2025 flagship; Native multimodal, rivaling GPT-4.5 levels |
+| **Gemini 2.x Flash/Pro** | Closed | Stable legacy; Great for long video upload and audio analysis |
+| **GPT-4o / 4o-mini** | Closed | Stable legacy; Broad capability, widely available |
+| **Qwen 2.5-VL** | 3B / 72B | Stable legacy; Event pinpointing, absolute time encoding |
+| **LLaVA-Video** | 7B / 72B | Strong on VideoMME benchmarks |
 
 ### How Video Input Works
 
@@ -53,15 +55,15 @@ Video → [Frame Extractor] → JPEG frames → [base64 encode] → API request
 vLLM is the recommended serving engine. It exposes an OpenAI-compatible API
 and supports all the models listed above.
 
-### Quick Start: Qwen2.5-VL-7B
+### Quick Start: Qwen 3.5-VL-8B
 
 ```bash
-pip install vllm>=0.7.2 qwen-vl-utils[decord]==0.0.8
+pip install vllm>=0.8.0 qwen-vl-utils>=0.1.0
 
-vllm serve Qwen/Qwen2.5-VL-7B-Instruct \
-    --limit-mm-per-prompt image=16 video=1 \
-    --max-model-len 32768 \
-    --gpu-memory-utilization 0.9
+vllm serve Qwen/Qwen3.5-VL-8B-Instruct \
+    --limit-mm-per-prompt video=1 \
+    --max-model-len 65536 \
+    --gpu-memory-utilization 0.95
 ```
 
 ### Quick Start: GLM-4.1V-9B-Thinking
@@ -73,26 +75,14 @@ vllm serve zai-org/GLM-4.1V-9B-Thinking \
     --trust-remote-code
 ```
 
-### Quick Start: Qwen3-VL-8B
-
-```bash
-pip install qwen-vl-utils==0.0.14
-
-vllm serve Qwen/Qwen3-VL-8B-Instruct \
-    --limit-mm-per-prompt image=16 video=1 \
-    --max-model-len 128000 \
-    --async-scheduling
-```
-
-### Hardware Guidelines
+### Hardware Guidelines (2026)
 
 | Model | Min GPU | Recommended | Notes |
 |-------|---------|-------------|-------|
-| Qwen2.5-VL-3B | RTX 3060 12GB | RTX 4070 | Edge-suitable |
-| Qwen2.5-VL-7B | RTX 3090 24GB | A100 40GB | Good quality/cost balance |
-| GLM-4.1V-9B-Thinking | RTX 3090 24GB | A100 40GB | Best 9B-class reasoning |
-| Qwen2.5-VL-72B | 4× A100 80GB | 4× H100 | Production quality |
-| Qwen3-VL-235B (MoE) | 8× A100 80GB | 8× H100/H200 | Flagship |
+| Qwen 3.5-VL-8B | RTX 4070 16GB | RTX 5090 / A100 | SOTA 2026 Edge |
+| GLM-4.1V-9B-Thinking | RTX 3090 24GB | A100 40GB | Best sub-10B reasoning |
+| Llama 4 Maverick (400B) | 8× A100 80GB | 8× H200 | Open-weights frontier |
+| Qwen 3.5-VL-250B+ (MoE) | 8× H100 80GB | 8× H200/B200 | Enterprise SOTA |
 
 > **Tip for your RTX 3060:** Qwen2.5-VL-3B with `--max-model-len 4096` and
 > AWQ quantization fits comfortably. Use `--limit-mm-per-prompt image=4 video=0`
@@ -132,20 +122,20 @@ monitoring pipeline:
 ### Example: Fall Detection
 
 ```bash
-# Single video file analysis
-python examples/video_monitoring_agent.py \
-    --video ./elderly_room_recording.mp4 \
-    --provider together \
-    --model Qwen/Qwen2.5-VL-72B-Instruct \
+# Fall detection
+vlm-agent-gateway monitor \
+    --video ./elderly_room.mp4 \
     --alert-prompt "Is anyone falling, lying on the floor, or in distress?" \
+    --provider google \
+    --model gemini-3-flash \
     --fps 1 --max-frames 30
 
 # Continuous webcam monitoring with local vLLM
-python examples/video_monitoring_agent.py \
+vlm-agent-gateway monitor \
     --video 0 \
     --provider openai \
     --endpoint http://localhost:8000/v1/chat/completions \
-    --model Qwen/Qwen2.5-VL-7B-Instruct \
+    --model Qwen/Qwen3.5-VL-8B-Instruct \
     --alert-prompt "Is anyone falling or showing signs of distress?" \
     --fps 0.5 --continuous --interval 15 --window-frames 8 \
     --output-jsonl ./fall_alerts.jsonl
@@ -154,10 +144,10 @@ python examples/video_monitoring_agent.py \
 ### Example: Security Monitoring
 
 ```bash
-python examples/video_monitoring_agent.py \
+vlm-agent-gateway monitor \
     --video rtsp://camera.local:554/stream \
-    --provider openai \
-    --model gpt-4o \
+    --provider google \
+    --model gemini-3-flash \
     --alert-prompt "Has anyone entered the restricted zone marked by yellow tape?" \
     --fps 0.5 --continuous --interval 10
 ```
@@ -165,11 +155,10 @@ python examples/video_monitoring_agent.py \
 ### Example: Industrial Safety
 
 ```bash
-python examples/video_monitoring_agent.py \
+vlm-agent-gateway monitor \
     --video ./factory_floor.mp4 \
     --provider openai \
-    --endpoint http://localhost:8000/v1/chat/completions \
-    --model zai-org/GLM-4.1V-9B-Thinking \
+    --model gpt-5 \
     --alert-prompt "Is any worker not wearing a hard hat or safety vest?" \
     --fps 1 --max-frames 20
 ```
@@ -224,7 +213,9 @@ python vlm-agent-gateway/main.py \
 | **Best reasoning (self-hosted)** | GLM-4.1V-9B-Thinking on vLLM | 9B model that competes with 72B, chain-of-thought |
 | **Edge / low-resource** | Qwen2.5-VL-3B + AWQ on vLLM | Fits on 12GB GPU, still capable |
 | **Long video (1hr+)** | Qwen2.5-VL-72B or Gemini 2.x | Dynamic FPS + absolute time encoding |
-| **Maximum accuracy** | Qwen3-VL-235B or GLM-4.5V | Frontier performance, needs multi-GPU |
+| **Maximum accuracy** | Qwen 3.5-VL-250B+ or GLM-4.5V | Frontier performance, needs multi-GPU |
+| **Lowest latency / Real-time** | Llama 3.2 Vision on Cerebras | Extreme inference speed (100s of tokens/sec) |
+
 
 ---
 
