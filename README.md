@@ -1,124 +1,110 @@
 # VLM Agent Gateway
 
-Experimenting with multi-provider Vision Language Model inference using sequential, parallel, conditional, iterative, Mixture-of-Agents (MoA), and ReAct (Reasoning + Acting) agent workflow patterns. Dispatch to one or more VLM providers as chained, parallel, routed, looping, or tool-using agent pipelines from a single CLI call.
+Multi-provider Vision Language Model inference framework with 7 workflow patterns: sequential, parallel, conditional, iterative, Mixture-of-Agents (MoA), ReAct (Reasoning + Acting), and video monitoring.
 
-## Main Project
+## Installation
 
-### VLM Agent Gateway (`vlm-agent-gateway/`)
-A multimodal agent client implementing the full set of agent workflow patterns across multiple providers.
-
-**[📖 Source](vlm-agent-gateway/main.py)**
-
-#### Key Features
-- 🤖 **6 workflow modes** — `sequential`, `parallel`, `conditional`, `iterative`, `moa`, `react` via `--workflow`
-- 🔗 **Sequential chaining** — each agent receives prior agents' outputs as accumulated context
-- ⚡ **Parallel fan-out** — same input dispatched concurrently, best answer selected
-- 🔀 **Conditional routing** — router agent classifies input, specialist agent handles request
-- 🔁 **Iterative refinement** — output fed back as context each iteration until convergence
-- 🧩 **Mixture-of-Agents** — parallel proposers → aggregator synthesizes final answer
-- 🛠️ **ReAct** — agent reasons, selects a tool, observes result, loops until Final Answer
-- 🔌 **Multi-provider** — OpenAI, Anthropic, Google, Together, Groq, Mistral, Azure per-agent
-- 🔍 **Observability** — per-agent latency, `correlation_id`, `stop_reason`, raw responses
-
-#### Workflow Quick Start
-
-**Sequential** — each stage builds on the previous (default):
 ```bash
-python vlm-agent-gateway/main.py \
-    --workflow sequential \
+# Install from source
+pip install -e .
+
+# With video monitoring support (requires OpenCV)
+pip install -e ".[video]"
+
+# With development tools
+pip install -e ".[dev,video]"
+```
+
+## Quick Start
+
+```bash
+# Sequential workflow (default) - each stage builds on previous
+vlm-agent-gateway run --workflow sequential \
     --prompt "Describe this image" \
     --images image.jpg \
     --models gpt-4o-mini gpt-4o \
     --providers openai openai
-```
 
-**Parallel** — same input to multiple agents, best answer selected:
-```bash
-python vlm-agent-gateway/main.py \
-    --workflow parallel \
+# Parallel workflow - same input to multiple agents
+vlm-agent-gateway run --workflow parallel \
     --prompt "What objects are in this image?" \
     --images image.jpg \
-    --models gpt-4o-mini claude-3-haiku \
-    --providers openai anthropic \
-    --endpoints https://api.openai.com/v1/chat/completions https://api.anthropic.com/v1/messages
-```
+    --models gpt-4o-mini Qwen/Qwen2.5-VL-72B-Instruct \
+    --providers openai together
 
-**Conditional** — router classifies input, specialist handles it:
-```bash
-python vlm-agent-gateway/main.py \
-    --workflow conditional \
-    --prompt "Analyze this image" \
-    --images image.jpg \
-    --models gpt-4o-mini gpt-4o-mini \
-    --providers openai openai \
-    --categories document scene \
-    --router-model gpt-4o-mini \
-    --router-provider openai
-```
-
-**Iterative** — refines answer across iterations with context accumulation:
-```bash
-python vlm-agent-gateway/main.py \
-    --workflow iterative \
-    --prompt "Describe this image in detail" \
-    --images image.jpg \
-    --model gpt-4o-mini \
-    --max-iterations 3 \
-    --evaluator-model gpt-4o \
-    --evaluator-provider openai
-```
-
-**Mixture-of-Agents** — parallel proposers → aggregator synthesizer:
-```bash
-python vlm-agent-gateway/main.py \
-    --workflow moa \
-    --prompt "Describe this image in detail" \
-    --images image.jpg \
-    --models gpt-4o-mini claude-3-haiku \
-    --providers openai anthropic \
-    --endpoints https://api.openai.com/v1/chat/completions https://api.anthropic.com/v1/messages \
-    --aggregator-model gpt-4o \
-    --aggregator-provider openai
-```
-
-**ReAct** — agent reasons, picks a tool, observes output, loops to Final Answer:
-```bash
-python vlm-agent-gateway/main.py \
-    --workflow react \
-    --prompt "How many people are in this image and what are they doing?" \
+# ReAct workflow - agent reasons and uses tools
+vlm-agent-gateway run --workflow react \
+    --prompt "Count the people and describe what they're doing" \
     --images image.jpg \
     --model gpt-4o \
-    --tools describe detect_objects count_objects \
-    --max-steps 5
+    --tools describe detect_objects count_objects
+
+# Video monitoring - continuous or single-shot
+vlm-agent-gateway monitor \
+    --video ./sample.mp4 \
+    --alert-prompt "Is anyone falling or in distress?" \
+    --provider together \
+    --model Qwen/Qwen2.5-VL-72B-Instruct
+
+# Continuous webcam monitoring
+vlm-agent-gateway monitor \
+    --video 0 \
+    --alert-prompt "Has anyone entered the restricted area?" \
+    --continuous --interval 10
 ```
 
-#### Workflow Modes
+## Features
 
-| Mode | Agents | Data flow |
+- **7 workflow patterns** — `sequential`, `parallel`, `conditional`, `iterative`, `moa`, `react`, `monitor`
+- **Multi-provider support** — OpenAI, Anthropic, Google, Together, Azure, Groq, Mistral
+- **Video monitoring** — Fall detection, security monitoring, safety compliance
+- **ReAct tools** — describe, detect_objects, read_text, analyze_region, count_objects
+- **Observability** — per-agent latency, correlation IDs, structured JSON output
+
+## Workflow Modes
+
+| Mode | Agents | Data Flow |
 |------|--------|-----------|
 | `sequential` | ≥ 1 | Agent-1 → output-1 → Agent-2 (with context) → … → final |
-| `parallel` | ≥ 2 | All agents receive same input concurrently → best answer selected |
-| `conditional` | ≥ 2 | Router classifies input → matching specialist handles request |
-| `iterative` | 1 + optional evaluator | Agent loops, feeding output back as context until convergence |
-| `moa` | ≥ 2 + aggregator | Parallel proposers → aggregator synthesizes all candidates |
-| `react` | 1 | Thought → Action (tool) → Observation loop until Final Answer |
+| `parallel` | ≥ 2 | All agents receive same input concurrently → best answer |
+| `conditional` | ≥ 2 | Router classifies input → matching specialist handles |
+| `iterative` | 1 + evaluator | Agent loops, feeding output back until convergence |
+| `moa` | ≥ 2 + aggregator | Parallel proposers → aggregator synthesizes |
+| `react` | 1 | Thought → Action (tool) → Observation loop |
+| `monitor` | 1 | Video frames → VLM analysis → structured alerts |
 
-#### Built-in ReAct Tools
+## Video Monitoring
 
-| Tool | Description |
-|------|-------------|
-| `describe` | Detailed image description with optional focus prompt |
-| `detect_objects` | List all visible objects as a JSON array |
-| `read_text` | Extract visible text (OCR) |
-| `analyze_region` | Focus on a described region and answer a question about it |
-| `count_objects` | Count occurrences of a specific named object |
+The `monitor` command supports video-capable VLMs for real-time monitoring:
 
-Omit `--tools` to enable all tools. Pass a subset to restrict the agent's action space.
+```bash
+# Fall detection
+vlm-agent-gateway monitor \
+    --video ./elderly_room.mp4 \
+    --alert-prompt "Is anyone falling, lying on the floor, or in distress?" \
+    --fps 1 --max-frames 30
 
-#### Supported Providers
+# Continuous security monitoring
+vlm-agent-gateway monitor \
+    --video rtsp://camera.local:554/stream \
+    --alert-prompt "Has anyone entered the restricted zone?" \
+    --continuous --interval 10 --window-frames 8
 
-| Provider | `--providers` value | API key env var |
-|----------|--------------------|-----------------| 
+# Self-hosted with vLLM
+vlm-agent-gateway monitor \
+    --video 0 \
+    --endpoint http://localhost:8000/v1/chat/completions \
+    --model Qwen/Qwen2.5-VL-7B-Instruct \
+    --alert-prompt "Detect any hazard" \
+    --continuous
+```
+
+See [docs/video-vlm-agents.md](docs/video-vlm-agents.md) for model recommendations and deployment guides.
+
+## Supported Providers
+
+| Provider | `--provider` | API Key Env Var |
+|----------|--------------|-----------------|
 | OpenAI | `openai` | `OPENAI_API_KEY` |
 | Anthropic | `anthropic` | `ANTHROPIC_API_KEY` |
 | Google | `google` | `GOOGLE_API_KEY` |
@@ -127,22 +113,39 @@ Omit `--tools` to enable all tools. Pass a subset to restrict the agent's action
 | Groq | `groq` | `GROQ_API_KEY` |
 | Mistral | `mistral` | `MISTRAL_API_KEY` |
 
----
+## Python API
 
-### C++ Client
-A C++ CLI for single-branch VLM inference using OpenAI-compatible APIs.
+```python
+from vlm_agent_gateway import run_sequential, run_react, run_monitoring
+from vlm_agent_gateway.cli import make_agent
 
-**[📖 Full Documentation](vlm-inference-client/cpp/Readme.md)**
+# Create agents
+agent = make_agent("gpt-4o", "openai", "https://api.openai.com/v1/chat/completions")
 
-#### Key Features
-- 🔌 Multiple API provider support (OpenAI, Together, vLLM, and more)
-- 🖼️ Multimodal capabilities (text + multiple images)
-- 🔄 Automatic image preprocessing and resizing
-- ⚙️ Configurable detail levels and token limits
-- 🌐 Support for local files and image URLs
+# Run workflow
+result = run_react(
+    agent=agent,
+    prompt="Describe this image and count the people",
+    image_paths=["image.jpg"],
+    detail="low",
+    max_tokens=500,
+    resize=False,
+    target_size=(512, 512),
+    enabled_tools=["describe", "count_objects"],
+    max_steps=5,
+)
+print(result["content"])
+```
 
-#### Quick Start
+## C++ Client
+
+A lightweight C++ client for single-shot OpenAI-compatible inference.
+
 ```bash
+cd vlm-inference-client/cpp
+mkdir build && cd build
+cmake .. && make
+
 ./vlm-inference-client \
     --prompt "Describe this image" \
     --images image.jpg \
@@ -151,20 +154,15 @@ A C++ CLI for single-branch VLM inference using OpenAI-compatible APIs.
     --api_key_env OPENAI_API_KEY
 ```
 
----
+See [vlm-inference-client/cpp/Readme.md](vlm-inference-client/cpp/Readme.md) for details.
 
-## Additional Resources
+## Documentation
 
+- [Video VLM Agents Guide](docs/video-vlm-agents.md) - Video-capable VLMs, vLLM deployment, hardware sizing
+- [API Services](docs/api-services.md) - Vision multimodal API providers
+- [Benchmarks](docs/benchmarks.md) - VLM evaluation benchmarks
+- [Inference](docs/inference.md) - Inference frameworks and tools
 
-## Other Documentation/Resources
+## License
 
-- **[Benchmarks](docs/benchmarks.md)** - VLM evaluation benchmarks and leaderboards
-- **[Courses & Tutorials](docs/courses.md)** - Online courses and learning resources
-- **[API Services](docs/api-services.md)** - Vision multimodal API providers
-- **[Finetuning](docs/finetuning.md)** - Resources for finetuning VLMs
-- **[RAG](docs/rag.md)** - Multimodal RAG resources
-- **[Inference](docs/inference.md)** - Inference frameworks and tools
-- **[Cloud GPU](docs/cloud-gpu.md)** - GPU rental services
-- **[Google AI](docs/google.md)** - Google-specific resources (Gemini, Vertex AI)
-- **[Llama](docs/llama.md)** - Llama-specific resources
-- **[Nvidia Dynamo](https://developer.nvidia.com/dynamo)** - Nvidia framework that serves VLM/LLM models by wrapping tensort-llm/vllm/sglang backends
+MIT
