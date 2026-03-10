@@ -8,7 +8,6 @@ Input ──► [Agent-1] ──► output-1
                    prompt + output-1 + output-2 ──► [Agent-3] ──► final
 """
 
-
 from vlm_agent_gateway.models import Agent
 from vlm_agent_gateway.providers import run_agent
 
@@ -34,9 +33,7 @@ def run_sequential(
     stages = []
     for i, agent in enumerate(agents):
         if stages:
-            context_block = "\n\n".join(
-                f"[Stage {s['stage']} — {s['model']}]\n{s['content']}" for s in stages
-            )
+            context_block = "\n\n".join(f"[Stage {s['stage']} — {s['model']}]\n{s['content']}" for s in stages)
             current_prompt = (
                 f"{prompt}\n\n"
                 f"Prior stage outputs:\n{context_block}\n\n"
@@ -49,14 +46,16 @@ def run_sequential(
         if result.error:
             raise RuntimeError(f"Stage {i + 1} failed: {result.error}")
 
-        stages.append({
-            "stage": i + 1,
-            "agent_id": result.agent_id,
-            "model": result.model,
-            "provider": result.provider,
-            "latency_ms": round(result.latency_ms, 1),
-            "content": result.content,
-        })
+        stages.append(
+            {
+                "stage": i + 1,
+                "agent_id": result.agent_id,
+                "model": result.model,
+                "provider": result.provider,
+                "latency_ms": round(result.latency_ms, 1),
+                "content": result.content,
+            }
+        )
 
     return {
         "workflow": "sequential",

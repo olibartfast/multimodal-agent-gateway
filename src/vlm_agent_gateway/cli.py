@@ -91,9 +91,7 @@ def cmd_run(args) -> None:
             router_endpoint = args.router_endpoint or agents[0].endpoint
             router = make_agent(router_model, router_provider, router_endpoint)
             if len(args.categories) != len(agents):
-                raise ValueError(
-                    f"--categories ({len(args.categories)}) must match --models ({len(agents)})"
-                )
+                raise ValueError(f"--categories ({len(args.categories)}) must match --models ({len(agents)})")
             output = run_conditional(router, agents, args.categories, **common)
 
         elif args.workflow == "iterative":
@@ -213,9 +211,7 @@ def main() -> None:
     )
 
     # Agent targets
-    run_parser.add_argument(
-        "--models", type=str, nargs="+", metavar="MODEL", help="One model per agent"
-    )
+    run_parser.add_argument("--models", type=str, nargs="+", metavar="MODEL", help="One model per agent")
     run_parser.add_argument(
         "--providers",
         type=str,

@@ -62,13 +62,15 @@ def build_video_payload(
     content: list[dict] = [{"type": "text", "text": user_prompt}]
 
     for b64 in frame_b64_list:
-        content.append({
-            "type": "image_url",
-            "image_url": {
-                "url": f"data:image/jpeg;base64,{b64}",
-                "detail": detail,
-            },
-        })
+        content.append(
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{b64}",
+                    "detail": detail,
+                },
+            }
+        )
 
     return {
         "model": model,

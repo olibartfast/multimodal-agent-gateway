@@ -10,7 +10,6 @@ Input ──► [Router Agent] ──► category
                              final output
 """
 
-
 from vlm_agent_gateway.models import Agent
 from vlm_agent_gateway.providers import run_agent
 
@@ -44,9 +43,7 @@ def run_conditional(
         "Reply with ONLY the category name, nothing else.\n\n"
         f"Prompt: {prompt}"
     )
-    router_result = run_agent(
-        router_agent, router_prompt, image_paths, detail, max_tokens, resize, target_size
-    )
+    router_result = run_agent(router_agent, router_prompt, image_paths, detail, max_tokens, resize, target_size)
     if router_result.error:
         raise RuntimeError(f"Router agent failed: {router_result.error}")
 

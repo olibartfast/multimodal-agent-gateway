@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 @dataclass
 class Agent:
     """Configuration for a single VLM agent."""
+
     model: str
     endpoint: str
     api_key: str
@@ -20,6 +21,7 @@ class Agent:
 @dataclass
 class AgentResult:
     """Result from executing a single agent call."""
+
     agent_id: str
     model: str
     provider: str
@@ -36,6 +38,7 @@ class AgentResult:
 @dataclass
 class Tool:
     """Definition of a ReAct tool."""
+
     name: str
     description: str
     parameters: str  # JSON schema hint shown to the agent
@@ -45,6 +48,7 @@ class Tool:
 @dataclass
 class AlertEvent:
     """Result from a video monitoring cycle."""
+
     timestamp: str
     alert: bool
     summary: str

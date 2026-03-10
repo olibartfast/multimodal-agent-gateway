@@ -2,7 +2,6 @@
 Built-in ReAct tools for vision analysis.
 """
 
-
 from vlm_agent_gateway.models import Agent, Tool
 from vlm_agent_gateway.providers import run_agent
 
@@ -103,8 +102,7 @@ def _tool_count_objects(
     object_name = kwargs.get("object", "objects")
     result = run_agent(
         agent,
-        f"Count exactly how many '{object_name}' are visible in this image. "
-        "Return only an integer.",
+        f"Count exactly how many '{object_name}' are visible in this image. Return only an integer.",
         image_paths,
         detail,
         max_tokens,

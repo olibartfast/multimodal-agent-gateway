@@ -11,6 +11,7 @@ log = logging.getLogger("vlm-agent-gateway.video")
 # cv2 is an optional dependency
 try:
     import cv2
+
     HAS_CV2 = True
 except ImportError:
     HAS_CV2 = False

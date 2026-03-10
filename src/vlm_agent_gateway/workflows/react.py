@@ -8,7 +8,6 @@ prompt ──► [Agent: Thought + Action] ──► tool call
                        ──► Final Answer
 """
 
-
 from vlm_agent_gateway.config import REACT_SYSTEM_PROMPT
 from vlm_agent_gateway.models import Agent, Tool
 from vlm_agent_gateway.providers import run_agent
@@ -36,16 +35,12 @@ def run_react(
     step budget is exhausted.
     """
     tools: dict[str, Tool] = (
-        {k: v for k, v in BUILTIN_TOOLS.items() if k in enabled_tools}
-        if enabled_tools
-        else BUILTIN_TOOLS
+        {k: v for k, v in BUILTIN_TOOLS.items() if k in enabled_tools} if enabled_tools else BUILTIN_TOOLS
     )
     if not tools:
         raise ValueError(f"No valid tools enabled. Available: {list(BUILTIN_TOOLS.keys())}")
 
-    tool_descriptions = "\n".join(
-        f"  {t.name}: {t.description} | parameters: {t.parameters}" for t in tools.values()
-    )
+    tool_descriptions = "\n".join(f"  {t.name}: {t.description} | parameters: {t.parameters}" for t in tools.values())
     system_prompt = REACT_SYSTEM_PROMPT.format(tool_descriptions=tool_descriptions)
     conversation = f"{system_prompt}\n\nQuestion: {prompt}\n"
 
@@ -66,10 +61,7 @@ def run_react(
 
         # Execute the tool
         if action not in tools:
-            observation = (
-                f"Unknown tool '{action}'. Available tools: {list(tools.keys())}. "
-                "Please choose a valid tool."
-            )
+            observation = f"Unknown tool '{action}'. Available tools: {list(tools.keys())}. Please choose a valid tool."
         else:
             try:
                 observation = tools[action].fn(
@@ -78,14 +70,16 @@ def run_react(
             except Exception as exc:
                 observation = f"Tool '{action}' raised an error: {exc}"
 
-        steps.append({
-            "step": step_num,
-            "thought": thought,
-            "action": action,
-            "action_input": action_input,
-            "observation": observation,
-            "latency_ms": round(result.latency_ms, 1),
-        })
+        steps.append(
+            {
+                "step": step_num,
+                "thought": thought,
+                "action": action,
+                "action_input": action_input,
+                "observation": observation,
+                "latency_ms": round(result.latency_ms, 1),
+            }
+        )
 
         # Append model output + observation to conversation for next step
         conversation += f"\n{model_output.rstrip()}\nObservation: {observation}\n"

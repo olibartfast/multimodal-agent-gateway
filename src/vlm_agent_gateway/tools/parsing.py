@@ -18,9 +18,7 @@ def _parse_react_step(text: str) -> tuple[str | None, str | None, dict, str | No
     if final_match:
         return None, None, {}, final_match.group(1).strip()
 
-    thought_match = re.search(
-        r"Thought\s*:\s*(.+?)(?=Action\s*:|$)", text, re.DOTALL | re.IGNORECASE
-    )
+    thought_match = re.search(r"Thought\s*:\s*(.+?)(?=Action\s*:|$)", text, re.DOTALL | re.IGNORECASE)
     action_match = re.search(r"Action\s*:\s*(\w+)", text, re.IGNORECASE)
     input_match = re.search(
         r"Action Input\s*:\s*(\{.*?\}|\S.*?)(?=\nObservation|\nThought|\nAction|$)",
@@ -53,9 +51,7 @@ def parse_monitor_output(text: str) -> dict:
         "thought": "",
     }
 
-    thought_m = re.search(
-        r"Thought:\s*(.+?)(?=Alert:|$)", text, re.DOTALL | re.IGNORECASE
-    )
+    thought_m = re.search(r"Thought:\s*(.+?)(?=Alert:|$)", text, re.DOTALL | re.IGNORECASE)
     if thought_m:
         result["thought"] = thought_m.group(1).strip()
 
@@ -63,9 +59,7 @@ def parse_monitor_output(text: str) -> dict:
     if alert_m:
         result["alert"] = alert_m.group(1).strip().upper() == "YES"
 
-    summary_m = re.search(
-        r"Summary:\s*(.+?)(?=Confidence:|Alert:|$)", text, re.DOTALL | re.IGNORECASE
-    )
+    summary_m = re.search(r"Summary:\s*(.+?)(?=Confidence:|Alert:|$)", text, re.DOTALL | re.IGNORECASE)
     if summary_m:
         result["summary"] = summary_m.group(1).strip()
 
@@ -73,9 +67,7 @@ def parse_monitor_output(text: str) -> dict:
     if conf_m:
         result["confidence"] = conf_m.group(1).strip().upper()
 
-    action_m = re.search(
-        r"Recommended Action:\s*(.+?)$", text, re.DOTALL | re.IGNORECASE
-    )
+    action_m = re.search(r"Recommended Action:\s*(.+?)$", text, re.DOTALL | re.IGNORECASE)
     if action_m:
         result["recommended_action"] = action_m.group(1).strip()
 

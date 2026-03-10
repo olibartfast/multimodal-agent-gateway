@@ -34,9 +34,7 @@ def run_moa(
     # Step 1 — Parallel proposers
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [
-            executor.submit(
-                run_agent, a, prompt, image_paths, detail, max_tokens, resize, target_size
-            )
+            executor.submit(run_agent, a, prompt, image_paths, detail, max_tokens, resize, target_size)
             for a in proposer_agents
         ]
         proposer_results = [f.result() for f in concurrent.futures.as_completed(futures)]
@@ -47,11 +45,10 @@ def run_moa(
 
     # Step 2 — Aggregator synthesizes all candidates
     candidates_block = "\n\n".join(
-        f"[Candidate {i + 1} — {r.model} / {r.provider}]\n{r.content}"
-        for i, r in enumerate(successful)
+        f"[Candidate {i + 1} — {r.model} / {r.provider}]\n{r.content}" for i, r in enumerate(successful)
     )
     aggregator_prompt = (
-        f'You are an impartial synthesizer. Below are {len(successful)} candidate answers '
+        f"You are an impartial synthesizer. Below are {len(successful)} candidate answers "
         f'to the question: "{prompt}"\n\n'
         f"{candidates_block}\n\n"
         "Compare the candidates, extract consensus points, resolve conflicts, "

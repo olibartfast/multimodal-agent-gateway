@@ -90,6 +90,7 @@ Rules:
 # Helper functions
 # ---------------------------------------------------------------------------
 
+
 def get_api_key(provider: str) -> str:
     """Get API key from environment for a provider."""
     env_var = PROVIDER_ENV_MAP.get(provider.lower(), "OPENAI_API_KEY")

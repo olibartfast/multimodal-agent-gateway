@@ -10,7 +10,6 @@ prompt ──► [Agent] ──► output-1
                        final output
 """
 
-
 from vlm_agent_gateway.models import Agent
 from vlm_agent_gateway.providers import run_agent
 
@@ -50,13 +49,9 @@ def run_iterative(
                 f"Response: {result.content}\n\n"
                 "Reply with ONLY a single integer between 1 and 10."
             )
-            eval_result = run_agent(
-                evaluator_agent, eval_prompt, [], detail, max_tokens, resize, target_size
-            )
+            eval_result = run_agent(evaluator_agent, eval_prompt, [], detail, max_tokens, resize, target_size)
             try:
-                score = int(
-                    "".join(filter(str.isdigit, eval_result.content.strip()))[:2] or "0"
-                )
+                score = int("".join(filter(str.isdigit, eval_result.content.strip()))[:2] or "0")
             except ValueError:
                 score = 0
             converged = score >= 7
@@ -64,22 +59,22 @@ def run_iterative(
             # Simple heuristic: converged when response is substantive
             converged = len(result.content.strip()) >= 100
 
-        iterations.append({
-            "iteration": i + 1,
-            "agent_id": result.agent_id,
-            "model": result.model,
-            "latency_ms": round(result.latency_ms, 1),
-            "content": result.content,
-            "converged": converged,
-        })
+        iterations.append(
+            {
+                "iteration": i + 1,
+                "agent_id": result.agent_id,
+                "model": result.model,
+                "latency_ms": round(result.latency_ms, 1),
+                "content": result.content,
+                "converged": converged,
+            }
+        )
 
         if converged:
             break
 
         # Feed accumulated outputs back as context for next iteration
-        history_block = "\n\n".join(
-            f"[Iteration {it['iteration']}]\n{it['content']}" for it in iterations
-        )
+        history_block = "\n\n".join(f"[Iteration {it['iteration']}]\n{it['content']}" for it in iterations)
         current_prompt = (
             f"{prompt}\n\n"
             f"Previous attempts:\n{history_block}\n\n"

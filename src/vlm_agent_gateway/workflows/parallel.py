@@ -32,9 +32,7 @@ def run_parallel(
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = {
-            executor.submit(
-                run_agent, a, prompt, image_paths, detail, max_tokens, resize, target_size
-            ): a
+            executor.submit(run_agent, a, prompt, image_paths, detail, max_tokens, resize, target_size): a
             for a in agents
         }
         results = [f.result() for f in concurrent.futures.as_completed(futures)]
