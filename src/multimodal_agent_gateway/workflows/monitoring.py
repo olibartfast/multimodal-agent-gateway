@@ -12,7 +12,13 @@ from datetime import datetime, timezone
 
 from multimodal_agent_gateway.config import MONITOR_SYSTEM_PROMPT
 from multimodal_agent_gateway.models import AlertEvent
-from multimodal_agent_gateway.providers import build_video_payload, normalize_response, send_request
+from multimodal_agent_gateway.providers import (
+    build_anthropic_video_payload,
+    build_video_payload,
+    normalize_response,
+    send_anthropic_request,
+    send_request,
+)
 from multimodal_agent_gateway.tools.parsing import parse_monitor_output
 from multimodal_agent_gateway.video import extract_frames_cv2, frames_to_base64
 
@@ -27,6 +33,7 @@ def run_monitoring_cycle(
     alert_prompt: str,
     max_tokens: int = 1024,
     detail: str = "low",
+    provider: str = "openai",
 ) -> AlertEvent:
     """
     Run one monitoring cycle: send frames → parse agent response → return AlertEvent.
@@ -38,17 +45,29 @@ def run_monitoring_cycle(
         f"monitoring condition is present."
     )
 
-    payload = build_video_payload(
-        model=model,
-        system_prompt=MONITOR_SYSTEM_PROMPT,
-        user_prompt=user_prompt,
-        frame_b64_list=frame_b64_list,
-        max_tokens=max_tokens,
-        detail=detail,
-    )
+    if provider == "anthropic":
+        payload = build_anthropic_video_payload(
+            model=model,
+            system_prompt=MONITOR_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            frame_b64_list=frame_b64_list,
+            max_tokens=max_tokens,
+        )
+    else:
+        payload = build_video_payload(
+            model=model,
+            system_prompt=MONITOR_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            frame_b64_list=frame_b64_list,
+            max_tokens=max_tokens,
+            detail=detail,
+        )
 
     t0 = time.time()
-    response = send_request(api_key, endpoint, payload)
+    if provider == "anthropic":
+        response = send_anthropic_request(api_key, endpoint, payload)
+    else:
+        response = send_request(api_key, endpoint, payload)
     latency_ms = (time.time() - t0) * 1000
 
     text = normalize_response(response)
@@ -95,6 +114,7 @@ def run_continuous_monitoring(
     max_tokens: int = 1024,
     detail: str = "low",
     output_jsonl: str | None = None,
+    provider: str = "openai",
 ) -> None:
     """
     Continuously capture frames and run monitoring cycles.
@@ -163,6 +183,7 @@ def run_continuous_monitoring(
                     alert_prompt=alert_prompt,
                     max_tokens=max_tokens,
                     detail=detail,
+                    provider=provider,
                 )
                 alert_handler_console(event)
                 if output_jsonl:
@@ -192,6 +213,7 @@ def run_monitoring(
     interval_seconds: float = 10.0,
     window_frames: int = 8,
     output_jsonl: str | None = None,
+    provider: str = "openai",
 ) -> dict:
     """
     Run video monitoring workflow.
@@ -213,6 +235,7 @@ def run_monitoring(
             max_tokens=max_tokens,
             detail=detail,
             output_jsonl=output_jsonl,
+            provider=provider,
         )
         return {"workflow": "monitor", "mode": "continuous", "status": "stopped"}
 
@@ -233,6 +256,7 @@ def run_monitoring(
         alert_prompt=alert_prompt,
         max_tokens=max_tokens,
         detail=detail,
+        provider=provider,
     )
 
     alert_handler_console(event)

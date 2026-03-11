@@ -21,7 +21,7 @@ PROVIDER_ENV_MAP: dict[str, str] = {
 
 PROVIDER_DEFAULTS: dict[str, str] = {
     "openai": "https://api.openai.com/v1/chat/completions",
-    "anthropic": "https://api.anthropic.com/v1/chat/completions",
+    "anthropic": "https://api.anthropic.com/v1/messages",
     "google": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     "together": "https://api.together.xyz/v1/chat/completions",
     "groq": "https://api.groq.com/openai/v1/chat/completions",

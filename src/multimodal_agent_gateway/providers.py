@@ -80,6 +80,78 @@ def build_video_payload(
     }
 
 
+def create_anthropic_payload(
+    prompt: str,
+    image_paths: list[str] | None,
+    model: str,
+    max_tokens: int,
+    resize: bool = False,
+    target_size: tuple[int, int] = (512, 512),
+) -> dict:
+    """
+    Build an Anthropic Messages API payload with images.
+
+    Uses Anthropic's native image format (base64 or URL source blocks)
+    instead of OpenAI's image_url wrapper.
+    """
+    content: list[dict] = [{"type": "text", "text": prompt}]
+    for image_path in image_paths or []:
+        if is_url(image_path) and not resize:
+            img_block = {
+                "type": "image",
+                "source": {"type": "url", "url": image_path},
+            }
+        else:
+            b64 = encode_image(image_path, resize, target_size)
+            img_block = {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/jpeg",
+                    "data": b64,
+                },
+            }
+        content.append(img_block)
+    return {
+        "model": model,
+        "max_tokens": max_tokens,
+        "messages": [{"role": "user", "content": content}],
+    }
+
+
+def build_anthropic_video_payload(
+    model: str,
+    system_prompt: str,
+    user_prompt: str,
+    frame_b64_list: list[str],
+    max_tokens: int = 1024,
+) -> dict:
+    """
+    Build an Anthropic Messages API payload for multi-frame video analysis.
+
+    System prompt is sent as a top-level field (Anthropic convention).
+    Frames are encoded as base64 image source blocks.
+    """
+    content: list[dict] = [{"type": "text", "text": user_prompt}]
+    for b64 in frame_b64_list:
+        content.append(
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/jpeg",
+                    "data": b64,
+                },
+            }
+        )
+    return {
+        "model": model,
+        "system": system_prompt,
+        "max_tokens": max_tokens,
+        "messages": [{"role": "user", "content": content}],
+    }
+
+
 def send_request(
     api_key: str,
     url: str,
@@ -94,6 +166,24 @@ def send_request(
     response = requests.post(url, headers=headers, json=payload, timeout=timeout)
     if response.status_code != 200:
         raise RuntimeError(f"API request failed: {response.status_code} {response.text}")
+    return response.json()
+
+
+def send_anthropic_request(
+    api_key: str,
+    url: str,
+    payload: dict,
+    timeout: int = 120,
+) -> dict:
+    """POST to the Anthropic Messages API using native auth headers."""
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+    }
+    response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+    if response.status_code != 200:
+        raise RuntimeError(f"Anthropic API request failed: {response.status_code} {response.text}")
     return response.json()
 
 
@@ -131,10 +221,16 @@ def run_agent(
     target_size: tuple[int, int],
 ) -> AgentResult:
     """Execute a single agent call and return an AgentResult."""
-    payload = create_payload(prompt, image_paths, agent.model, detail, max_tokens, resize, target_size)
+    if agent.provider == "anthropic":
+        payload = create_anthropic_payload(prompt, image_paths, agent.model, max_tokens, resize, target_size)
+    else:
+        payload = create_payload(prompt, image_paths, agent.model, detail, max_tokens, resize, target_size)
     t0 = time.time()
     try:
-        response = send_request(agent.api_key, agent.endpoint, payload)
+        if agent.provider == "anthropic":
+            response = send_anthropic_request(agent.api_key, agent.endpoint, payload)
+        else:
+            response = send_request(agent.api_key, agent.endpoint, payload)
         latency_ms = (time.time() - t0) * 1000
         return AgentResult(
             agent_id=agent.agent_id,

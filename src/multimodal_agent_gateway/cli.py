@@ -163,6 +163,7 @@ def cmd_monitor(args) -> None:
             interval_seconds=args.interval,
             window_frames=args.window_frames,
             output_jsonl=args.output_jsonl,
+            provider=args.provider,
         )
 
         output["correlation_id"] = correlation_id
